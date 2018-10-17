@@ -1,3 +1,12 @@
+/**
+ * Address Parser
+ *
+ * This program will accept a large csv style txt file,
+ * parse its contents for valid addresses,
+ * and verify each with Google's geocode API.
+ *
+ * Verified addresses will stream to console.log()
+ */
 const fs = require('fs');
 const targz = require('targz');
 const reader = require('line-by-line');
@@ -90,6 +99,7 @@ const processAddressLine = async (line) => {
   let address = '';
   let readCharacters = 0;
 
+  // Format address line according to the rules
   ADDRESS_PARSE_RULES.forEach((rule) => {
     const segment = line
       .slice(readCharacters, readCharacters + rule.limit)
@@ -99,8 +109,11 @@ const processAddressLine = async (line) => {
     address = `${address}${segment}${segment.length ? rule.delim : ''}`;
   });
 
+  // Attempt to geoencode the formatted address
   const encodedAddress = await geocodeAddress(address);
 
+  // Return a formatted string of the encoded and original address if the encoded address
+  // is valid
   if (encodedAddress !== null) {
     return {
       encoded: encodedAddress,
@@ -108,6 +121,7 @@ const processAddressLine = async (line) => {
     };
   }
 
+  // The encoded address is not valid, return null
   return null;
 };
 
@@ -136,11 +150,13 @@ const readAddressesFile = () => {
       lines.resume();
     });
 
+    // Error out if the file can no longer be read for some reason
     lines.on('error', (err) => {
       console.log('Error parsing addresses file...', err);
       reject(addresses);
     });
 
+    // Resolve this promise, we're done!
     lines.on('end', () => {
       console.log(addresses.length, 'addresses parsed');
       resolve(addresses);
