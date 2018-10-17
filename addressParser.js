@@ -1,6 +1,12 @@
 const fs = require('fs');
 const targz = require('targz');
 const reader = require('line-by-line');
+const geocoder = require('@google/maps').createClient({
+  // I know this is insecure, but this is a private repo
+  // Will regenerate key before sharing this with y'all at Ambyint :)
+  key: 'AIzaSyDJ9gAVmjgDP33RHQNN6YK3TwJBxTmqmw8',
+  Promise,
+}).geocode;
 
 const ADDRESS_PARSE_RULES = [
   { rule: 'House Number', limit: 30, delim: ' ' },
@@ -37,13 +43,50 @@ const decompressFile = (src, dest, callback) => {
 };
 
 /**
+ * Encode provided address
+ *
+ * @param {string} address to be encoded
+ *
+ * @return {string|null} formatted string containing lat, long; Or null if the address was not
+ *  properly encoded
+ */
+const geocodeAddress = async (address) => {
+  let response = null;
+
+  try {
+    // Make request to google geocode api for address
+    response = await geocoder({ address }).asPromise();
+    response = response.json.results[0];
+
+    // Determine if the address matches criteria
+    if (
+      response != null
+      && response.partial_match !== true
+      && response.geometry.location_type === 'ROOFTOP'
+    ) {
+      const encodedAddress = response.geometry.location;
+
+      return `${encodedAddress.lat}, ${encodedAddress.lng}`;
+    }
+
+    // The encoded address did not meet criteria
+    return null;
+  } catch (e) {
+    console.error('Geocoder request failed...', e);
+
+    return null;
+  }
+};
+
+/**
  * Given a line of address content, parse based on ADDRESS_PARSE_RULES
  *
  * @param {string} line address line from addresses.txt
  *
- * @return {string} formatted address
+ * @return {object|null} encoded and unencoded address
+ *  { encoded: {string}, unencoded: {string} }
  */
-const processAddressLine = (line) => {
+const processAddressLine = async (line) => {
   let address = '';
   let readCharacters = 0;
 
@@ -56,26 +99,46 @@ const processAddressLine = (line) => {
     address = `${address}${segment}${segment.length ? rule.delim : ''}`;
   });
 
-  return address;
+  const encodedAddress = await geocodeAddress(address);
+
+  if (encodedAddress !== null) {
+    return {
+      encoded: encodedAddress,
+      unencoded: address,
+    };
+  }
+
+  return null;
 };
 
 /**
  * Read address text file
  *
- * @param {string} srcDir directory containing addresses.txt file containing address information
+ * @return {array} objects containing encoded and un-encoded addresses
+ * [
+ *  { encoded: {string}, unencoded: {string} }
+ * ]
  */
-const readAddressesFile = (srcDir) => {
-  console.log('Reading addresses...');
-  return new Promise((resolve) => {
+const readAddressesFile = () => {
+  console.log('Reading and encoding valid addresses...');
+  return new Promise((resolve, reject) => {
     const lines = new reader(ADDRESS_FILE, { encoding: 'utf8', skipEmptyLines: true });
     const addresses = [];
 
     // Process each line based on the rules, add it to array of addresses
-    lines.on('line', line => addresses.push(processAddressLine(line)));
+    lines.on('line', async (line) => {
+      lines.pause();
+      const address = await processAddressLine(line);
+      if (address !== null) {
+        addresses.push(address);
+        console.log(address);
+      }
+      lines.resume();
+    });
 
     lines.on('error', (err) => {
       console.log('Error parsing addresses file...', err);
-      resolve(addresses);
+      reject(addresses);
     });
 
     lines.on('end', () => {
@@ -83,23 +146,6 @@ const readAddressesFile = (srcDir) => {
       resolve(addresses);
     });
   });
-};
-
-const geocodeAddresses = async (addresses) => {
-  console.log('geocoding not implemented');
-  // Make request to google geocode api for each address
-
-  // Filter out partial results and non 'rooftop' quaility results
-
-  // return new geocoded addresses paired with their original address
-  return [];
-};
-
-const parseAddresses = async () => {
-  const addresses = await readAddressesFile(ADDRESS_FILE);
-  const geocodedAddresses = await geocodeAddresses(addresses);
-
-  return geocodedAddresses;
 };
 
 /**
@@ -112,20 +158,18 @@ const parseAddresses = async () => {
  *  { encoded: {string}, unencoded: {string} }
  * ]
  */
-const getGeocodedAddresses = async (src) => {
-  let addresses = [];
-
-  if (!fs.existsSync(ADDRESS_FILE)) {
-    console.log('File does not exist, uncompressing archive...');
-    addresses = await decompressFile(src, './', parseAddresses);
-  } else {
-    console.log('File exists, re-parsing archive');
-    addresses = await parseAddresses();
+const getGeocodedAddresses = (src) => {
+  try {
+    if (!fs.existsSync(ADDRESS_FILE)) {
+      console.log('File does not exist, uncompressing archive...');
+      decompressFile(src, './', readAddressesFile);
+    } else {
+      console.log('File exists, re-parsing archive');
+      readAddressesFile();
+    }
+  } catch (error) {
+    console.error(error);
   }
-
-  console.log('addresses parsed');
-
-  return addresses;
 };
 
 getGeocodedAddresses('./addresses.tar.gz');
