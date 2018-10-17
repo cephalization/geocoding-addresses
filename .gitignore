@@ -1,3 +1,7 @@
+# Generated files
+._addresses.txt
+addresses.txt
+
 # Logs
 logs
 *.log
