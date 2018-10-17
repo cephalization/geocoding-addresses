@@ -1,1 +1,1 @@
-# Ambyint-Geocoding-Challenge
+# Ambyint Geocoding Challenge
