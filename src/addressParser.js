@@ -141,15 +141,12 @@ exports.readAddressesFile = () => {
 
     // Process each line based on the rules, add it to array of addresses
     lines.on('line', async (line) => {
-      lines.pause();
       const address = await exports.processAddressLine(line);
 
       if (address !== null) {
         addresses.push(address);
         console.log(address);
       }
-
-      lines.resume();
     });
 
     // Error out if the file can no longer be read for some reason
