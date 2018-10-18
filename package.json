@@ -8,7 +8,7 @@
     "targz": "^1.0.1"
   },
   "scripts": {
-    "start": "node ./main.js",
+    "start": "node --max-old-space-size=4096 ./main.js",
     "test": "npx mocha"
   },
   "devDependencies": {

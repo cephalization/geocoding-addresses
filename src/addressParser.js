@@ -137,14 +137,14 @@ exports.readAddressesFile = () => {
   console.log('Reading and encoding valid addresses...');
   return new Promise((resolve, reject) => {
     const lines = new reader(ADDRESS_FILE, { encoding: 'utf8', skipEmptyLines: true });
-    const addresses = [];
+    let addresses = 0;
 
     // Process each line based on the rules, add it to array of addresses
     lines.on('line', async (line) => {
       const address = await exports.processAddressLine(line);
 
       if (address !== null) {
-        addresses.push(address);
+        addresses++;
         console.log(address);
       }
     });
@@ -157,7 +157,7 @@ exports.readAddressesFile = () => {
 
     // Resolve this promise, we're done!
     lines.on('end', () => {
-      console.log(addresses.length, 'addresses parsed');
+      console.log(addresses, 'addresses parsed');
       resolve(addresses);
     });
   });
