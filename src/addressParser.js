@@ -12,7 +12,7 @@ const targz = require('targz');
 const reader = require('line-by-line');
 const geocoder = require('@google/maps').createClient({
   // I know this is insecure, but this is a private repo
-  // Will regenerate key before sharing this with y'all at Ambyint :)
+  // Will regenerate key after sharing this with y'all at Ambyint :)
   key: 'AIzaSyDJ9gAVmjgDP33RHQNN6YK3TwJBxTmqmw8',
   Promise,
 }).geocode;
