@@ -1,4 +1,4 @@
-const addressParser = require('../addressParser');
+const addressParser = require('../src/addressParser');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
