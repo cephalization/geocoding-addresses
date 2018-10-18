@@ -10,10 +10,17 @@
 const fs = require('fs');
 const targz = require('targz');
 const reader = require('line-by-line');
-const geocoder = require('@google/maps').createClient({
-  // I know this is insecure, but this is a private repo
-  // Will regenerate key after sharing this with y'all at Ambyint :)
-  key: 'AIzaSyDJ9gAVmjgDP33RHQNN6YK3TwJBxTmqmw8',
+const googleMaps = require('@google/maps');
+
+const GOOGLE_MAPS_API_KEY = '';
+
+if (GOOGLE_MAPS_API_KEY === '') {
+  console.error('Please enter a Google Maps api key in src/addressParser.js:15');
+  process.exit(0);
+}
+
+const geocoder = googleMaps.createClient({
+  key: GOOGLE_MAPS_API_KEY,
   Promise,
 }).geocode;
 
