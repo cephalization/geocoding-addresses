@@ -25,5 +25,3 @@ describe('Address formatting', () => {
     geocodeAddressStub.restore();
   });
 });
-
-describe('')
