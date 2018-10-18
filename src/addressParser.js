@@ -170,11 +170,6 @@ exports.readAddressesFile = () => {
  * Decompress, parse, and geo-encode addresses
  *
  * @param {string} src compressed archive of addresses
- *
- * @return {array} objects containing encoded and un-encoded addresses
- * [
- *  { encoded: {string}, unencoded: {string} }
- * ]
  */
 exports.getGeocodedAddresses = (src) => {
   try {
